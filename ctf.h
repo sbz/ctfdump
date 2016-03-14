@@ -82,8 +82,32 @@ struct ctf_enum {
 #define CTF_VERSION		2
 
 #define CTF_MAX_NAME		0x7fffffff
+#define CTF_MAX_VLEN		0x03ff
+
 #define CTF_STRTAB_0		0
 #define CTF_STRTAB_1		1
+
+/*
+ * Info macro.
+ */
+#define CTF_INFO_VLEN(i)	(((i) & CTF_MAX_VLEN))
+#define CTF_INFO_ISROOT(i)	(((i) & 0x0400) >> 10)
+#define CTF_INFO_KIND(i)	(((i) & 0xf800) >> 11)
+#define  CTF_K_UNKNOWN		0
+#define  CTF_K_INTEGER		1
+#define  CTF_K_FLOAT		2
+#define  CTF_K_POINTER		3
+#define  CTF_K_ARRAY		4
+#define  CTF_K_FUNCTION		5
+#define  CTF_K_STRUCT		6
+#define  CTF_K_UNION		7
+#define  CTF_K_ENUM		8
+#define  CTF_K_FORWARD		9
+#define  CTF_K_TYPEDEF		10
+#define  CTF_K_VOLATILE		11
+#define  CTF_K_CONST		12
+#define  CTF_K_RESTRICT		13
+#define  CTF_K_MAX		31
 
 /*
  * Name reference macro.

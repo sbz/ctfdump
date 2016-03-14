@@ -76,6 +76,9 @@ main(int argc, char *argv[])
 		case 'd':
 			flags |= DUMP_OBJECT;
 			break;
+		case 'f':
+			flags |= DUMP_FUNCTION;
+			break;
 		case 'h':
 			flags |= DUMP_HEADER;
 			break;
@@ -431,6 +434,31 @@ ctf_dump(const char *p, size_t size, uint32_t flags)
 				printf("\n");
 
 			objtoff += sizeof(*dsp);
+		}
+	}
+
+	if (flags & DUMP_FUNCTION) {
+		unsigned short		*fsp, kind, vlen;
+		size_t			 idx = 0, i = 0;
+		const char		*s;
+		int			 l;
+
+		fsp = (unsigned short *)(data + cth->cth_funcoff);
+		while (fsp < (unsigned short *)(data + cth->cth_typeoff)) {
+			kind = CTF_INFO_KIND(*fsp);
+			vlen = CTF_INFO_VLEN(*fsp);
+			fsp++;
+
+			if (kind == CTF_K_UNKNOWN && vlen == 0)
+				continue;
+
+			l = printf("%u [%zu] FUNC", vlen, i++);
+			if ((s = elf_idx2sym(&idx, STT_FUNC)) != NULL)
+				printf(" (%s)", s);
+			printf(" returns: %u args: (", *fsp++);
+			while (vlen-- > 0)
+				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
+			printf(")\n");
 		}
 	}
 
