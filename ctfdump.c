@@ -73,6 +73,9 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "dfhlsSt")) != -1) {
 		switch (ch) {
+		case 'd':
+			flags |= DUMP_OBJECT;
+			break;
 		case 'h':
 			flags |= DUMP_HEADER;
 			break;
@@ -271,6 +274,25 @@ const char		*strtab;
 const Elf_Sym		*symtab;
 size_t			 strtabsize, nsymb;
 
+const char *
+elf_idx2sym(size_t *idx, unsigned char type)
+{
+	const Elf_Sym	*st;
+	size_t		 i;
+
+	for (i = *idx + 1; i < nsymb; i++) {
+		st = &symtab[i];
+
+		if (ELF_ST_TYPE(st->st_info) != type)
+			continue;
+
+		*idx = i;
+		return strtab + st->st_name;
+	}
+
+	return NULL;
+}
+
 int
 elf_dump(const char *p, size_t filesize, uint32_t flags)
 {
@@ -389,6 +411,26 @@ ctf_dump(const char *p, size_t size, uint32_t flags)
 			    ctf_off2name(cth, data, dlen, ctl->ctl_label));
 
 			lbloff += sizeof(*ctl);
+		}
+	}
+
+	if (flags & DUMP_OBJECT) {
+		unsigned int		 objtoff = cth->cth_objtoff;
+		size_t			 idx = 0, i = 0;
+		unsigned short		*dsp;
+		const char		*s;
+		int			 l;
+
+		while (objtoff < cth->cth_funcoff) {
+			dsp = (unsigned short *)(data + objtoff);
+
+			l = printf("[%zu] %u", i++, *dsp);
+			if ((s = elf_idx2sym(&idx, STT_OBJECT)) != NULL)
+				printf("%*s %s (%zu)\n", (12 - l), "", s, idx);
+			else
+				printf("\n");
+
+			objtoff += sizeof(*dsp);
 		}
 	}
 
