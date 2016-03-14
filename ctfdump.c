@@ -40,6 +40,7 @@
 #define DUMP_OBJECT	(1 << 0)
 #define DUMP_FUNCTION	(1 << 1)
 #define DUMP_HEADER	(1 << 2)
+#define DUMP_LABEL	(1 << 3)
 
 int		 dump(const char *, uint32_t);
 int		 iself(const char *, size_t);
@@ -74,6 +75,9 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'h':
 			flags |= DUMP_HEADER;
+			break;
+		case 'l':
+			flags |= DUMP_LABEL;
 			break;
 		default:
 			usage();
@@ -372,6 +376,20 @@ ctf_dump(const char *p, size_t size, uint32_t flags)
 		printf("cth_typeoff  = %d\n", cth->cth_typeoff);
 		printf("cth_stroff   = %d\n", cth->cth_stroff);
 		printf("cth_strlen   = %d\n", cth->cth_strlen);
+	}
+
+	if (flags & DUMP_LABEL) {
+		unsigned int		 lbloff = cth->cth_lbloff;
+		struct ctf_lblent	*ctl;
+
+		while (lbloff < cth->cth_objtoff) {
+			ctl = (struct ctf_lblent *)(data + lbloff);
+
+			printf("%5u %s\n", ctl->ctl_typeidx,
+			    ctf_off2name(cth, data, dlen, ctl->ctl_label));
+
+			lbloff += sizeof(*ctl);
+		}
 	}
 
 	if (cth->cth_flags & CTF_F_COMPRESS)
