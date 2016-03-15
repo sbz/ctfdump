@@ -35,6 +35,10 @@
 
 #include "ctf.h"
 
+#ifndef nitems
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
 #define SUNW_CTF	".SUNW_ctf"
 
 #define DUMP_OBJECT	(1 << 0)
@@ -42,6 +46,8 @@
 #define DUMP_HEADER	(1 << 2)
 #define DUMP_LABEL	(1 << 3)
 #define DUMP_STRTAB	(1 << 4)
+#define DUMP_STATISTIC	(1 << 5)
+#define DUMP_TYPE	(1 << 6)
 
 int		 dump(const char *, uint32_t);
 int		 iself(const char *, size_t);
@@ -49,6 +55,9 @@ int		 isctf(const char *, size_t);
 __dead void	 usage(void);
 
 int		 ctf_dump(const char *, size_t, uint32_t);
+unsigned int	 ctf_dump_type(struct ctf_header *, const char *, off_t,
+		     unsigned int, unsigned int);
+const char	*ctf_kind2name(unsigned short);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
 		     unsigned int);
 
@@ -88,6 +97,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			flags |= DUMP_STRTAB;
+			break;
+		case 't':
+			flags |= DUMP_TYPE;
 			break;
 		default:
 			usage();
@@ -483,10 +495,107 @@ ctf_dump(const char *p, size_t size, uint32_t flags)
 		}
 	}
 
+	if (flags & DUMP_TYPE) {
+		unsigned int		 idx = 1, offset = 0;
+
+		while (offset < cth->cth_stroff)
+			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
+
+	}
+
 	if (cth->cth_flags & CTF_F_COMPRESS)
 		free(data);
 
 	return 0;
+}
+
+unsigned int
+ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
+    unsigned int offset, unsigned int idx)
+{
+	const struct ctf_type	*ctt;
+	unsigned short		 kind, vlen, root;
+	unsigned int		 toff, tlen = 0;
+	uint64_t		 size;
+	const char		*name, *kname;
+
+	ctt = (struct ctf_type *)(data + cth->cth_typeoff + offset);
+	kind = CTF_INFO_KIND(ctt->ctt_info);
+	vlen = CTF_INFO_VLEN(ctt->ctt_info);
+	root = CTF_INFO_ISROOT(ctt->ctt_info);
+	name = ctf_off2name(cth, data, dlen, ctt->ctt_name);
+
+	if (root)
+		printf("<%u> ", idx);
+	else
+		printf("[%u] ", idx);
+
+	if ((kname = ctf_kind2name(kind)) != NULL)
+		printf("%s %s", kname, name);
+
+	if (ctt->ctt_size <= CTF_MAX_SIZE) {
+		size = ctt->ctt_size;
+		toff = sizeof(struct ctf_stype);
+	} else {
+		size = CTF_TYPE_LSIZE(ctt);
+		toff = sizeof(struct ctf_type);
+	}
+
+	switch (kind) {
+	case CTF_K_UNKNOWN:
+	case CTF_K_FORWARD:
+		break;
+	case CTF_K_INTEGER:
+		tlen = sizeof(unsigned int);
+		break;
+	case CTF_K_FLOAT:
+		break;
+	case CTF_K_ARRAY:
+		tlen = sizeof(struct ctf_array);
+		break;
+	case CTF_K_FUNCTION:
+		tlen = (vlen + (vlen & 1)) * sizeof(unsigned short);
+		break;
+	case CTF_K_STRUCT:
+	case CTF_K_UNION:
+		printf(" (%llu bytes)", size);
+		if (size < CTF_LSTRUCT_THRESH)
+			tlen = vlen * sizeof(struct ctf_member);
+		else
+			tlen = vlen * sizeof(struct ctf_lmember);
+		break;
+	case CTF_K_ENUM:
+		tlen = vlen * sizeof(struct ctf_enum);
+		break;
+	case CTF_K_POINTER:
+		vlen = sizeof(unsigned int);
+		/* FALLTHROUGH */
+	case CTF_K_TYPEDEF:
+	case CTF_K_VOLATILE:
+	case CTF_K_CONST:
+	case CTF_K_RESTRICT:
+		printf(" refers to %u", ctt->ctt_type);
+		break;
+	default:
+		errx(1, "incorrect type %u at offset %u", kind, offset);
+	}
+
+	printf("\n");
+
+	return toff + tlen;
+}
+
+const char *
+ctf_kind2name(unsigned short kind)
+{
+	static const char *kind_name[] = { NULL, "INTEGER", "FLOAT", "POINTER",
+	   "ARRAYS", "FUNCTION", "STRUCT", "UNION", "ENUM", "FORWARD",
+	   "TYPEDEF", "VOLATILE", "CONST", "RESTRICT" };
+
+	if (kind >= nitems(kind_name))
+		return NULL;
+
+	return kind_name[kind];
 }
 
 const char *

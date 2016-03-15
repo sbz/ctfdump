@@ -50,6 +50,16 @@ struct ctf_stype {
 #define cts_type _ST._type
 };
 
+struct ctf_type {
+	struct ctf_stype	_ctt_stype;
+#define ctt_name _ctt_stype.cts_name
+#define ctt_info _ctt_stype.cts_info
+#define ctt_size _ctt_stype.cts_size
+#define ctt_type _ctt_stype.cts_type
+	unsigned int		ctt_lsizehi;
+	unsigned int		ctt_lsizelo;
+};
+
 struct ctf_array {
 	unsigned short		cta_contents;
 	unsigned short		cta_index;
@@ -83,6 +93,7 @@ struct ctf_enum {
 
 #define CTF_MAX_NAME		0x7fffffff
 #define CTF_MAX_VLEN		0x03ff
+#define CTF_MAX_SIZE		0xfffe
 
 #define CTF_STRTAB_0		0
 #define CTF_STRTAB_1		1
@@ -114,3 +125,11 @@ struct ctf_enum {
  */
 #define CTF_NAME_STID(n)	((n) >> 31)
 #define CTF_NAME_OFFSET(n)	((n) & CTF_MAX_NAME)
+
+/*
+ * Type macro.
+ */
+#define CTF_SIZE_TO_LSIZE_HI(s)	((uint32_t)((uint64_t)(s) >> 32))
+#define CTF_SIZE_TO_LSIZE_LO(s)	((uint32_t)(s))
+#define CTF_TYPE_LSIZE(t)	\
+	(((uint64_t)(t)->ctt_lsizehi) << 32 | (t)->ctt_lsizelo)
