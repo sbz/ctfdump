@@ -41,6 +41,7 @@
 #define DUMP_FUNCTION	(1 << 1)
 #define DUMP_HEADER	(1 << 2)
 #define DUMP_LABEL	(1 << 3)
+#define DUMP_STRTAB	(1 << 4)
 
 int		 dump(const char *, uint32_t);
 int		 iself(const char *, size_t);
@@ -84,6 +85,9 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			flags |= DUMP_LABEL;
+			break;
+		case 's':
+			flags |= DUMP_STRTAB;
 			break;
 		default:
 			usage();
@@ -459,6 +463,23 @@ ctf_dump(const char *p, size_t size, uint32_t flags)
 			while (vlen-- > 0)
 				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
 			printf(")\n");
+		}
+	}
+
+	if (flags & DUMP_STRTAB) {
+		unsigned int		 offset = 0;
+		const char		*str;
+
+		while (offset < cth->cth_strlen) {
+			str = data + cth->cth_stroff + offset;
+
+			printf("[%u] ", offset);
+			if (*str != '\0')
+				offset += printf("%s\n", str);
+			else {
+				printf("\\0\n");
+				offset++;
+			}
 		}
 	}
 
