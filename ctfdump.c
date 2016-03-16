@@ -49,19 +49,19 @@
 #define DUMP_STATISTIC	(1 << 5)
 #define DUMP_TYPE	(1 << 6)
 
-int		 dump(const char *, uint32_t);
+int		 dump(const char *, uint8_t);
 int		 iself(const char *, size_t);
 int		 isctf(const char *, size_t);
 __dead void	 usage(void);
 
-int		 ctf_dump(const char *, size_t, uint32_t);
+int		 ctf_dump(const char *, size_t, uint8_t);
 unsigned int	 ctf_dump_type(struct ctf_header *, const char *, off_t,
 		     unsigned int, unsigned int);
 const char	*ctf_kind2name(unsigned short);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
 		     unsigned int);
 
-int		 elf_dump(const char *, size_t, uint32_t);
+int		 elf_dump(const char *, size_t, uint8_t);
 int		 elf_getshstrtab(const char *, size_t, const char **, size_t *);
 int		 elf_getsymtab(const char *, const char *, size_t,
 		     const Elf_Sym **, size_t *);
@@ -76,7 +76,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *filename;
-	uint32_t flags = 0;
+	uint8_t flags = 0;
 	int ch, error = 0;
 
 	setlocale(LC_ALL, "");
@@ -109,6 +109,10 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	/* Dump everything by default */
+	if (flags == 0)
+		flags = 0xff;
+
 	while ((filename = *argv++) != NULL)
 		error |= dump(filename, flags);
 
@@ -116,7 +120,7 @@ main(int argc, char *argv[])
 }
 
 int
-dump(const char *path, uint32_t flags)
+dump(const char *path, uint8_t flags)
 {
 	struct stat		 st;
 	int			 fd, error = 1;
@@ -313,7 +317,7 @@ elf_idx2sym(size_t *idx, unsigned char type)
 }
 
 int
-elf_dump(const char *p, size_t filesize, uint32_t flags)
+elf_dump(const char *p, size_t filesize, uint8_t flags)
 {
 	Elf_Ehdr		*eh = (Elf_Ehdr *)p;
 	Elf_Shdr		*sh;
@@ -391,7 +395,7 @@ isctf(const char *p, size_t filesize)
 }
 
 int
-ctf_dump(const char *p, size_t size, uint32_t flags)
+ctf_dump(const char *p, size_t size, uint8_t flags)
 {
 	struct ctf_header	*cth = (struct ctf_header *)p;
 	char			*data = (char *)p;
