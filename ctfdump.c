@@ -165,10 +165,9 @@ iself(const char *p, size_t filesize)
 {
 	Elf_Ehdr		*eh = (Elf_Ehdr *)p;
 
-	if (eh->e_ehsize < sizeof(Elf_Ehdr) || !IS_ELF(*eh)) {
-		warnx("file is not ELF");
+	if (eh->e_ehsize < sizeof(Elf_Ehdr) || !IS_ELF(*eh))
 		return 0;
-	}
+
 	if (eh->e_ident[EI_CLASS] != ELFCLASS) {
 		warnx("unexpected word size %u", eh->e_ident[EI_CLASS]);
 		return 0;
