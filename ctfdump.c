@@ -397,13 +397,15 @@ int
 ctf_dump(const char *p, size_t size, uint8_t flags)
 {
 	struct ctf_header	*cth = (struct ctf_header *)p;
-	char			*data = (char *)p;
 	off_t 			 dlen = cth->cth_stroff + cth->cth_strlen;
+	char			*data;
 
 	if (cth->cth_flags & CTF_F_COMPRESS) {
 		data = decompress(p + sizeof(*cth), size - sizeof(*cth), dlen);
 		if (data == NULL)
 			return 1;
+	} else {
+		data = (char *)p + sizeof(*cth);
 	}
 
 	if (flags & DUMP_HEADER) {
