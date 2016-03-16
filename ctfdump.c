@@ -178,7 +178,7 @@ iself(const char *p, size_t filesize)
 		return 0;
 	}
 	if (eh->e_shoff > filesize) {
-		warnx("bogus section table offset 0x%llx", eh->e_shoff);
+		warnx("bogus section table offset 0x%llx", (off_t)eh->e_shoff);
 		return 0;
 	}
 	if (eh->e_shentsize < sizeof(Elf_Shdr)) {
