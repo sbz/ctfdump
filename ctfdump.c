@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "dfhlsSt")) != -1) {
+	while ((ch = getopt(argc, argv, "dfhlst")) != -1) {
 		switch (ch) {
 		case 'd':
 			flags |= DUMP_OBJECT;
@@ -674,7 +674,7 @@ usage(void)
 {
 	extern char		*__progname;
 
-	fprintf(stderr, "usage: %s [-dfhlsSt] [file ...]\n",
+	fprintf(stderr, "usage: %s [-dfhlst] [file ...]\n",
 	    __progname);
 	exit(1);
 }
