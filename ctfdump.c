@@ -67,6 +67,7 @@ int		 elf_getsymtab(const char *, const char *, size_t,
 		     const Elf_Sym **, size_t *);
 int		 elf_getstrtab(const char *, const char *, size_t,
 		     const char **, size_t *);
+const char	*elf_idx2sym(size_t *, unsigned char);
 
 #ifdef ZLIB
 char		*decompress(const char *, size_t, off_t);
