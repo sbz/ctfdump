@@ -519,13 +519,13 @@ unsigned int
 ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
     unsigned int offset, unsigned int idx)
 {
-	const struct ctf_type	*ctt;
-	unsigned short		 kind, vlen, root;
-	unsigned int		 toff, tlen = 0;
+	const char		*p = data + cth->cth_typeoff + offset;
+	const struct ctf_type	*ctt = (struct ctf_type *)p;
+	unsigned short		 i, kind, vlen, root;
+	unsigned int		 eob, toff;
 	uint64_t		 size;
 	const char		*name, *kname;
 
-	ctt = (struct ctf_type *)(data + cth->cth_typeoff + offset);
 	kind = CTF_INFO_KIND(ctt->ctt_info);
 	vlen = CTF_INFO_VLEN(ctt->ctt_info);
 	root = CTF_INFO_ISROOT(ctt->ctt_info);
@@ -552,30 +552,68 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 	case CTF_K_FORWARD:
 		break;
 	case CTF_K_INTEGER:
-		tlen = sizeof(unsigned int);
+		eob = *((unsigned int *)((char *)ctt + toff));
+		toff += sizeof(unsigned int);
+		printf(" encoding=0x%x offset=%u bits=%u",
+		    CTF_INT_ENCODING(eob), CTF_INT_OFFSET(eob),
+		    CTF_INT_BITS(eob));
 		break;
 	case CTF_K_FLOAT:
+		eob = *((unsigned int *)((char *)ctt + toff));
+		toff += sizeof(unsigned int);
+		printf(" encoding=0x%x offset=%u bits=%u",
+		    CTF_FP_ENCODING(eob), CTF_FP_OFFSET(eob), CTF_FP_BITS(eob));
 		break;
 	case CTF_K_ARRAY:
-		tlen = sizeof(struct ctf_array);
+		toff += sizeof(struct ctf_array);
 		break;
 	case CTF_K_FUNCTION:
-		tlen = (vlen + (vlen & 1)) * sizeof(unsigned short);
+		toff += (vlen + (vlen & 1)) * sizeof(unsigned short);
 		break;
 	case CTF_K_STRUCT:
 	case CTF_K_UNION:
-		printf(" (%llu bytes)", size);
-		if (size < CTF_LSTRUCT_THRESH)
-			tlen = vlen * sizeof(struct ctf_member);
-		else
-			tlen = vlen * sizeof(struct ctf_lmember);
+		printf(" (%llu bytes)\n", size);
+
+		if (size < CTF_LSTRUCT_THRESH) {
+			for (i = 0; i < vlen; i++) {
+				struct ctf_member	*ctm;
+
+				ctm = (struct ctf_member *)(p + toff);
+				toff += sizeof(struct ctf_member);
+
+				printf("\t%s type=%u off=%u\n",
+				    ctf_off2name(cth, data, dlen,
+					ctm->ctm_name),
+				    ctm->ctm_type, ctm->ctm_offset);
+			}
+		} else {
+			for (i = 0; i < vlen; i++) {
+				struct ctf_lmember	*ctlm;
+
+				ctlm = (struct ctf_lmember *)(p + toff);
+				toff += sizeof(struct ctf_lmember);
+
+				printf("\t%s type=%u off=%llu\n",
+				    ctf_off2name(cth, data, dlen,
+					ctlm->ctlm_name),
+				    ctlm->ctlm_type, CTF_LMEM_OFFSET(ctlm));
+			}
+		}
 		break;
 	case CTF_K_ENUM:
-		tlen = vlen * sizeof(struct ctf_enum);
+		printf("\n");
+		for (i = 0; i < vlen; i++) {
+			struct ctf_enum	*cte;
+
+			cte = (struct ctf_enum *)(p + toff);
+			toff += sizeof(struct ctf_enum);
+
+			printf("\t%s = %u\n",
+			    ctf_off2name(cth, data, dlen, cte->cte_name),
+			    cte->cte_value);
+		}
 		break;
 	case CTF_K_POINTER:
-		vlen = sizeof(unsigned int);
-		/* FALLTHROUGH */
 	case CTF_K_TYPEDEF:
 	case CTF_K_VOLATILE:
 	case CTF_K_CONST:
@@ -588,7 +626,7 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 
 	printf("\n");
 
-	return toff + tlen;
+	return toff;
 }
 
 const char *

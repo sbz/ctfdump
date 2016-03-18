@@ -75,7 +75,7 @@ struct ctf_member {
 struct ctf_lmember {
 	struct ctf_member	_ctlm_member;
 #define ctlm_name _ctlm_member.ctm_name
-#define ctlm_type _ctlm_member.ctlm_type
+#define ctlm_type _ctlm_member.ctm_type
 #define ctlm_pad0 _ctlm_member.ctm_offset
 	unsigned int		ctlm_offsethi;
 	unsigned int		ctlm_offsetlo;
@@ -121,6 +121,37 @@ struct ctf_enum {
 #define  CTF_K_MAX		31
 
 /*
+ * Integer/Float Encoding macro.
+ */
+#define _CTF_ENCODING(e)	(((e) & 0xff000000) >> 24)
+#define _CTF_OFFSET(e)		(((e) & 0x00ff0000) >> 16)
+#define _CTF_BITS(e)		(((e) & 0x0000ffff))
+
+#define CTF_INT_ENCODING(e)	_CTF_ENCODING(e)
+#define  CTF_INT_SIGNED		(1 << 0)
+#define  CTF_INT_CHAR		(1 << 1)
+#define  CTF_INT_BOOL		(1 << 2)
+#define  CTF_INT_VARARGS	(1 << 3)
+#define CTF_INT_OFFSET(e)	_CTF_OFFSET(e)
+#define CTF_INT_BITS(e)		_CTF_BITS(e)
+
+#define CTF_FP_ENCODING(e)	_CTF_ENCODING(e)
+#define  CTF_FP_SINGLE		1
+#define  CTF_FP_DOUBLE		2
+#define  CTF_FP_CPLX		3
+#define  CTF_FP_DCPLX		4
+#define  CTF_FP_LDCPLX		5
+#define  CTF_FP_LDOUBLE		6
+#define  CTF_FP_INTRVL		7
+#define  CTF_FP_DINTRVL		8
+#define  CTF_FP_LDINTRVL	9
+#define  CTF_FP_IMAGRY		10
+#define  CTF_FP_DIMAGRY		11
+#define  CTF_FP_LDIMAGRY	12
+#define CTF_FP_OFFSET(e)	_CTF_OFFSET(e)
+#define CTF_FP_BITS(e)		_CTF_BITS(e)
+
+/*
  * Name reference macro.
  */
 #define CTF_NAME_STID(n)	((n) >> 31)
@@ -133,3 +164,9 @@ struct ctf_enum {
 #define CTF_SIZE_TO_LSIZE_LO(s)	((uint32_t)(s))
 #define CTF_TYPE_LSIZE(t)	\
 	(((uint64_t)(t)->ctt_lsizehi) << 32 | (t)->ctt_lsizelo)
+
+/*
+ * Member macro.
+ */
+#define CTF_LMEM_OFFSET(m) \
+	(((uint64_t)(m)->ctlm_offsethi) << 32 | (m)->ctlm_offsetlo)
