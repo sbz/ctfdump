@@ -1,5 +1,6 @@
 
 PROG=		ctfdump
+SRCS=		ctfdump.c elf.c
 
 CFLAGS+=	-Wall -Wno-unused -Werror
 
