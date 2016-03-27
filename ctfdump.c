@@ -280,19 +280,20 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_HEADER) {
-		printf("cth_magic    = 0x%04x\n", cth->cth_magic);
-		printf("cth_version  = %d\n", cth->cth_version);
-		printf("cth_flags    = 0x%02x\n", cth->cth_flags);
-		printf("cth_parlabel = %s\n",
+		printf("  cth_magic    = 0x%04x\n", cth->cth_magic);
+		printf("  cth_version  = %d\n", cth->cth_version);
+		printf("  cth_flags    = 0x%02x\n", cth->cth_flags);
+		printf("  cth_parlabel = %s\n",
 		    ctf_off2name(cth, data, dlen, cth->cth_parname));
-		printf("cth_parname  = %s\n",
+		printf("  cth_parname  = %s\n",
 		    ctf_off2name(cth, data, dlen, cth->cth_parname));
-		printf("cth_lbloff   = %d\n", cth->cth_lbloff);
-		printf("cth_objtoff  = %d\n", cth->cth_objtoff);
-		printf("cth_funcoff  = %d\n", cth->cth_funcoff);
-		printf("cth_typeoff  = %d\n", cth->cth_typeoff);
-		printf("cth_stroff   = %d\n", cth->cth_stroff);
-		printf("cth_strlen   = %d\n", cth->cth_strlen);
+		printf("  cth_lbloff   = %d\n", cth->cth_lbloff);
+		printf("  cth_objtoff  = %d\n", cth->cth_objtoff);
+		printf("  cth_funcoff  = %d\n", cth->cth_funcoff);
+		printf("  cth_typeoff  = %d\n", cth->cth_typeoff);
+		printf("  cth_stroff   = %d\n", cth->cth_stroff);
+		printf("  cth_strlen   = %d\n", cth->cth_strlen);
+		printf("\n");
 	}
 
 	if (flags & DUMP_LABEL) {
@@ -302,11 +303,12 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		while (lbloff < cth->cth_objtoff) {
 			ctl = (struct ctf_lblent *)(data + lbloff);
 
-			printf("%5u %s\n", ctl->ctl_typeidx,
+			printf("  %5u %s\n", ctl->ctl_typeidx,
 			    ctf_off2name(cth, data, dlen, ctl->ctl_label));
 
 			lbloff += sizeof(*ctl);
 		}
+		printf("\n");
 	}
 
 	if (flags & DUMP_OBJECT) {
@@ -319,14 +321,15 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		while (objtoff < cth->cth_funcoff) {
 			dsp = (unsigned short *)(data + objtoff);
 
-			l = printf("[%zu] %u", i++, *dsp);
+			l = printf("  [%zu] %u", i++, *dsp);
 			if ((s = elf_idx2sym(&idx, STT_OBJECT)) != NULL)
-				printf("%*s %s (%zu)\n", (12 - l), "", s, idx);
+				printf("%*s %s (%zu)\n", (15 - l), "", s, idx);
 			else
 				printf("\n");
 
 			objtoff += sizeof(*dsp);
 		}
+		printf("\n");
 	}
 
 	if (flags & DUMP_FUNCTION) {
@@ -344,14 +347,15 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 			if (kind == CTF_K_UNKNOWN && vlen == 0)
 				continue;
 
-			l = printf("%u [%zu] FUNC", vlen, i++);
+			l = printf("  [%zu]", i++);
 			if ((s = elf_idx2sym(&idx, STT_FUNC)) != NULL)
-				printf(" (%s)", s);
+				printf(" %s (%zu)", s, idx);
 			printf(" returns: %u args: (", *fsp++);
 			while (vlen-- > 0)
 				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
 			printf(")\n");
 		}
+		printf("\n");
 	}
 
 	if (flags & DUMP_STRTAB) {
@@ -361,7 +365,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		while (offset < cth->cth_strlen) {
 			str = data + cth->cth_stroff + offset;
 
-			printf("[%u] ", offset);
+			printf("  [%u] ", offset);
 			if (*str != '\0')
 				offset += printf("%s\n", str);
 			else {
@@ -369,14 +373,16 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 				offset++;
 			}
 		}
+		printf("\n");
 	}
 
 	if (flags & DUMP_TYPE) {
 		unsigned int		 idx = 1, offset = 0;
 
-		while (offset < cth->cth_stroff)
+		while (offset < cth->cth_stroff) {
 			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
-
+		}
+		printf("\n");
 	}
 
 	if (cth->cth_flags & CTF_F_COMPRESS)
@@ -402,9 +408,9 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 	name = ctf_off2name(cth, data, dlen, ctt->ctt_name);
 
 	if (root)
-		printf("<%u> ", idx);
+		printf("  <%u> ", idx);
 	else
-		printf("[%u] ", idx);
+		printf("  [%u] ", idx);
 
 	if ((kname = ctf_kind2name(kind)) != NULL)
 		printf("%s %s", kname, name);
