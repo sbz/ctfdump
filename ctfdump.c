@@ -363,10 +363,10 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		const char		*str;
 
 		while (offset < cth->cth_strlen) {
-			str = data + cth->cth_stroff + offset;
+			str = ctf_off2name(cth, data, dlen, offset);
 
 			printf("  [%u] ", offset);
-			if (*str != '\0')
+			if (strcmp(str, "(anon)"))
 				offset += printf("%s\n", str);
 			else {
 				printf("\\0\n");
