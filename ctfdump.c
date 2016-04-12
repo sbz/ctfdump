@@ -68,8 +68,8 @@ int		 iself(const char *, size_t);
 int		 elf_getshstrtab(const char *, size_t, const char **, size_t *);
 int		 elf_getsymtab(const char *, const char *, size_t,
 		     const Elf_Sym **, size_t *);
-int		 elf_getstrtab(const char *, const char *, size_t,
-		     const char **, size_t *);
+int		 elf_getsection(const char *, const char *, const char *,
+		     size_t, const char **, size_t *);
 
 #ifdef ZLIB
 char		*decompress(const char *, size_t, off_t);
@@ -203,7 +203,7 @@ elf_dump(const char *p, size_t filesize, uint8_t flags)
 		warnx("symbol table not found");
 
 	/* Find string table location and size. */
-	if (elf_getstrtab(p, shstrtab, shstrtabsize, &strtab, &strtabsize))
+	if (elf_getsection(p, ELF_STRTAB, shstrtab, shstrtabsize, &strtab, &strtabsize))
 		warnx("string table not found");
 
 	/* Find CTF section and dump it. */
