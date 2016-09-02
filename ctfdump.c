@@ -323,13 +323,12 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 
 			l = printf("  [%zu] %u", i++, *dsp);
 			if ((s = elf_idx2sym(&idx, STT_OBJECT)) != NULL)
-				printf("%*s %s (%zu)\n", (15 - l), "", s, idx);
+				printf("%*s %s (%zu)\n", (14 - l), "", s, idx);
 			else
 				printf("\n");
 
 			objtoff += sizeof(*dsp);
 		}
-		printf("\n");
 	}
 
 	if (flags & DUMP_FUNCTION) {
@@ -347,9 +346,9 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 			if (kind == CTF_K_UNKNOWN && vlen == 0)
 				continue;
 
-			l = printf("  [%zu]", i++);
+			l = printf("  [%zu] FUNC ", i++);
 			if ((s = elf_idx2sym(&idx, STT_FUNC)) != NULL)
-				printf(" %s (%zu)", s, idx);
+				printf("(%s)", s);
 			printf(" returns: %u args: (", *fsp++);
 			while (vlen-- > 0)
 				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
