@@ -333,7 +333,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 
 	if (flags & DUMP_FUNCTION) {
 		unsigned short		*fsp, kind, vlen;
-		size_t			 idx = 0, i = 0;
+		size_t			 idx = 0, i = -1;
 		const char		*s;
 		int			 l;
 
@@ -341,13 +341,15 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		while (fsp < (unsigned short *)(data + cth->cth_typeoff)) {
 			kind = CTF_INFO_KIND(*fsp);
 			vlen = CTF_INFO_VLEN(*fsp);
+			s = elf_idx2sym(&idx, STT_FUNC);
 			fsp++;
+			i++;
 
 			if (kind == CTF_K_UNKNOWN && vlen == 0)
 				continue;
 
-			l = printf("  [%zu] FUNC ", i++);
-			if ((s = elf_idx2sym(&idx, STT_FUNC)) != NULL)
+			l = printf("  [%zu] FUNC ", i);
+			if (s != NULL)
 				printf("(%s)", s);
 			printf(" returns: %u args: (", *fsp++);
 			while (vlen-- > 0)
