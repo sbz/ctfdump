@@ -566,6 +566,7 @@ decompress(const char *buf, size_t size, off_t len)
 
 	if ((error = inflate(&stream, Z_FINISH)) != Z_STREAM_END) {
 		warnx("zlib inflate failed: %s", zError(error));
+		inflateEnd(&stream);
 		goto exit;
 	}
 
