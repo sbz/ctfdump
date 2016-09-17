@@ -39,8 +39,6 @@
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define SUNW_CTF	".SUNW_ctf"
-
 #define DUMP_OBJECT	(1 << 0)
 #define DUMP_FUNCTION	(1 << 1)
 #define DUMP_HEADER	(1 << 2)
@@ -214,7 +212,7 @@ elf_dump(const char *p, size_t filesize, uint8_t flags)
 		    (sh->sh_name >= shstrtabsize))
 			continue;
 
-		if (strncmp(shstrtab + sh->sh_name, SUNW_CTF, strlen(SUNW_CTF)))
+		if (strncmp(shstrtab + sh->sh_name, ELF_CTF, strlen(ELF_CTF)))
 			continue;
 
 		if (!isctf(p + sh->sh_offset, sh->sh_size))
@@ -223,7 +221,7 @@ elf_dump(const char *p, size_t filesize, uint8_t flags)
 		return ctf_dump(p + sh->sh_offset, sh->sh_size, flags);
 	}
 
-	warnx("%s section not found", SUNW_CTF);
+	warnx("%s section not found", ELF_CTF);
 	return 1;
 }
 
