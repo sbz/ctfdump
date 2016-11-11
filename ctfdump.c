@@ -54,6 +54,7 @@ int		 ctf_dump(const char *, size_t, uint8_t);
 unsigned int	 ctf_dump_type(struct ctf_header *, const char *, off_t,
 		     unsigned int, unsigned int);
 const char	*ctf_kind2name(unsigned short);
+const char	*ctf_enc2name(unsigned short);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
 		     unsigned int);
 
@@ -396,7 +397,8 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 {
 	const char		*p = data + offset;
 	const struct ctf_type	*ctt = (struct ctf_type *)p;
-	unsigned short		 i, kind, vlen, root;
+	const struct ctf_array	*cta;
+	unsigned short		*argp, i, kind, vlen, root;
 	unsigned int		 eob, toff;
 	uint64_t		 size;
 	const char		*name, *kname;
@@ -427,22 +429,32 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 	case CTF_K_FORWARD:
 		break;
 	case CTF_K_INTEGER:
-		eob = *((unsigned int *)((char *)ctt + toff));
+		eob = *((unsigned int *)(p + toff));
 		toff += sizeof(unsigned int);
-		printf(" encoding=0x%x offset=%u bits=%u",
-		    CTF_INT_ENCODING(eob), CTF_INT_OFFSET(eob),
+		printf(" encoding=%s offset=%u bits=%u",
+		    ctf_enc2name(CTF_INT_ENCODING(eob)), CTF_INT_OFFSET(eob),
 		    CTF_INT_BITS(eob));
 		break;
 	case CTF_K_FLOAT:
-		eob = *((unsigned int *)((char *)ctt + toff));
+		eob = *((unsigned int *)(p + toff));
 		toff += sizeof(unsigned int);
 		printf(" encoding=0x%x offset=%u bits=%u",
 		    CTF_FP_ENCODING(eob), CTF_FP_OFFSET(eob), CTF_FP_BITS(eob));
 		break;
 	case CTF_K_ARRAY:
+		cta = (struct ctf_array *)(p + toff);
+		printf(" content: %u index: %u nelems: %u\n", cta->cta_contents,
+		    cta->cta_index, cta->cta_nelems);
 		toff += sizeof(struct ctf_array);
 		break;
 	case CTF_K_FUNCTION:
+		argp = (unsigned short *)(p + toff);
+		printf(" returns: %u args: (%u", ctt->ctt_type, *argp);
+		for (i = 1; i < vlen; i++) {
+			argp++;
+			printf(", %u", *argp);
+		}
+		printf(")");
 		toff += (vlen + (vlen & 1)) * sizeof(unsigned short);
 		break;
 	case CTF_K_STRUCT:
@@ -508,13 +520,30 @@ const char *
 ctf_kind2name(unsigned short kind)
 {
 	static const char *kind_name[] = { NULL, "INTEGER", "FLOAT", "POINTER",
-	   "ARRAYS", "FUNCTION", "STRUCT", "UNION", "ENUM", "FORWARD",
+	   "ARRAY", "FUNCTION", "STRUCT", "UNION", "ENUM", "FORWARD",
 	   "TYPEDEF", "VOLATILE", "CONST", "RESTRICT" };
 
 	if (kind >= nitems(kind_name))
 		return NULL;
 
 	return kind_name[kind];
+}
+
+const char *
+ctf_enc2name(unsigned short enc)
+{
+	static const char *enc_name[] = { "SIGNED", "CHAR", "SIGNED CHAR",
+	    "BOOL", "SIGNED BOOL" };
+	static char invalid[7];
+
+	if (enc == CTF_INT_VARARGS)
+		return "VARARGS";
+
+	if (enc > 0 && enc < nitems(enc_name))
+		return enc_name[enc - 1];
+
+	snprintf(invalid, sizeof(invalid), "0x%x", enc);
+	return invalid;
 }
 
 const char *
