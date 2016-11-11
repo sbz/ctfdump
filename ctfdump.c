@@ -326,6 +326,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 
 			objtoff += sizeof(*dsp);
 		}
+		printf("\n");
 	}
 
 	if (flags & DUMP_FUNCTION) {
