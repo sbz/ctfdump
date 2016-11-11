@@ -376,7 +376,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_TYPE) {
-		unsigned int		 idx = 1, offset = 0;
+		unsigned int		 idx = 1, offset = cth->cth_typeoff;
 
 		while (offset < cth->cth_stroff) {
 			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
@@ -394,7 +394,7 @@ unsigned int
 ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
     unsigned int offset, unsigned int idx)
 {
-	const char		*p = data + cth->cth_typeoff + offset;
+	const char		*p = data + offset;
 	const struct ctf_type	*ctt = (struct ctf_type *)p;
 	unsigned short		 i, kind, vlen, root;
 	unsigned int		 eob, toff;
