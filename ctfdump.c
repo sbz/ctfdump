@@ -358,6 +358,15 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		printf("\n");
 	}
 
+	if (flags & DUMP_TYPE) {
+		unsigned int		 idx = 1, offset = cth->cth_typeoff;
+
+		while (offset < cth->cth_stroff) {
+			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
+		}
+		printf("\n");
+	}
+
 	if (flags & DUMP_STRTAB) {
 		unsigned int		 offset = 0;
 		const char		*str;
@@ -372,15 +381,6 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 				printf("\\0\n");
 				offset++;
 			}
-		}
-		printf("\n");
-	}
-
-	if (flags & DUMP_TYPE) {
-		unsigned int		 idx = 1, offset = cth->cth_typeoff;
-
-		while (offset < cth->cth_stroff) {
-			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
 		}
 		printf("\n");
 	}
