@@ -585,7 +585,7 @@ decompress(const char *buf, size_t size, off_t len)
 	memset(&stream, 0, sizeof(stream));
 	stream.next_in = (void *)buf;
 	stream.avail_in = size;
-	stream.next_out = data;
+	stream.next_out = (unsigned char *)data;
 	stream.avail_out = len;
 
 	if ((error = inflateInit(&stream)) != Z_OK) {
