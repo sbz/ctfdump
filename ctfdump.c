@@ -459,7 +459,7 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 		break;
 	case CTF_K_STRUCT:
 	case CTF_K_UNION:
-		printf(" (%llu bytes)\n", size);
+		printf(" (%"PRIu64" bytes)\n", size);
 
 		if (size < CTF_LSTRUCT_THRESH) {
 			for (i = 0; i < vlen; i++) {
@@ -480,7 +480,7 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 				ctlm = (struct ctf_lmember *)(p + toff);
 				toff += sizeof(struct ctf_lmember);
 
-				printf("\t%s type=%u off=%llu\n",
+				printf("\t%s type=%u off=%"PRIu64"\n",
 				    ctf_off2name(cth, data, dlen,
 					ctlm->ctlm_name),
 				    ctlm->ctlm_type, CTF_LMEM_OFFSET(ctlm));
@@ -605,7 +605,7 @@ decompress(const char *buf, size_t size, off_t len)
 	}
 
 	if (stream.total_out != len) {
-		warnx("decompression failed: %llu != %llu",
+		warnx("decompression failed: %"PRIu64" != %"PRIu64" ",
 		    stream.total_out, len);
 		goto exit;
 	}
