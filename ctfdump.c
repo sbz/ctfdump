@@ -42,6 +42,20 @@
 #define DUMP_STATISTIC	(1 << 5)
 #define DUMP_TYPE	(1 << 6)
 
+static struct {
+	unsigned long total_objs;
+	unsigned long total_funcs;
+	unsigned long total_func_args;
+	unsigned long max_args;
+	unsigned long total_args;
+	unsigned long total_types;
+	unsigned long types[16];
+	unsigned int total_members;
+	unsigned int total_all_struct;
+	size_t total_strings;
+	size_t max_string;
+} stats;
+
 int		 dump(const char *, uint8_t);
 int		 isctf(const char *, size_t);
 __dead void	 usage(void);
@@ -49,6 +63,7 @@ __dead void	 usage(void);
 int		 ctf_dump(const char *, size_t, uint8_t);
 unsigned int	 ctf_dump_type(struct ctf_header *, const char *, off_t,
 		     unsigned int, unsigned int);
+void		ctf_dump_stats(void);
 const char	*ctf_kind2name(unsigned short);
 const char	*ctf_enc2name(unsigned short);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
@@ -83,7 +98,7 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		usage();
 
-	while ((ch = getopt(argc, argv, "dfhlst")) != -1) {
+	while ((ch = getopt(argc, argv, "dfhlsSt")) != -1) {
 		switch (ch) {
 		case 'd':
 			flags |= DUMP_OBJECT;
@@ -99,6 +114,9 @@ main(int argc, char *argv[])
 			break;
 		case 's':
 			flags |= DUMP_STRTAB;
+			break;
+		case 'S':
+			flags |= DUMP_STATISTIC;
 			break;
 		case 't':
 			flags |= DUMP_TYPE;
@@ -313,10 +331,9 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 
 			lbloff += sizeof(*ctl);
 		}
-		printf("\n");
 	}
 
-	if (flags & DUMP_OBJECT) {
+	if (flags & (DUMP_OBJECT | DUMP_STATISTIC)) {
 		unsigned int		 objtoff = cth->cth_objtoff;
 		size_t			 idx = 0, i = 0;
 		unsigned short		*dsp;
@@ -335,11 +352,12 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 				printf("\n");
 
 			objtoff += sizeof(*dsp);
+
+			stats.total_objs++;
 		}
-		printf("\n");
 	}
 
-	if (flags & DUMP_FUNCTION) {
+	if (flags & (DUMP_FUNCTION | DUMP_STATISTIC)) {
 		unsigned short		*fsp, kind, vlen;
 		size_t			 idx = 0, i = -1;
 		const char		*s;
@@ -362,13 +380,17 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 			if (s != NULL)
 				printf("(%s)", s);
 			printf(" returns: %u args: (", *fsp++);
-			while (vlen-- > 0)
+			while (vlen-- > 0) {
 				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
+				stats.total_func_args++;
+			}
 			printf(")\n");
+
+			stats.total_funcs++;
 		}
 	}
 
-	if (flags & DUMP_TYPE) {
+	if (flags & (DUMP_TYPE | DUMP_STATISTIC)) {
 		unsigned int		 idx = 1, offset = cth->cth_typeoff;
 
 		print_line("- Types ");
@@ -376,10 +398,9 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		while (offset < cth->cth_stroff) {
 			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
 		}
-		printf("\n");
 	}
 
-	if (flags & DUMP_STRTAB) {
+	if (flags & (DUMP_STRTAB | DUMP_STATISTIC)) {
 		unsigned int		 offset = 0;
 		const char		*str;
 
@@ -396,6 +417,13 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 				offset++;
 			}
 		}
+	}
+
+	if (flags & DUMP_STATISTIC) {
+
+		print_line(" - CTF Statistics ");
+
+		ctf_dump_stats();
 	}
 
 	if (cth->cth_flags & CTF_F_COMPRESS)
@@ -526,7 +554,118 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 
 	printf("\n");
 
+	stats.total_types++;
+	stats.types[kind]++;
+
 	return toff;
+}
+
+void
+ctf_dump_stats(void) {
+	int i;
+	const char *fmt = "  %-36s= %"PRId64"\n";
+	struct {
+		const char *format;
+		const char *desc;
+		unsigned long count;
+	} dump_types[18] = {
+		{
+			.format = fmt,
+			.desc = "total number of functions",
+			.count = stats.total_funcs
+		},
+		{
+			.format = fmt,
+			.desc = "total number of function arguments",
+			.count = stats.total_func_args
+		},
+		{
+			.format = fmt,
+			.desc = "maximum argument list length",
+			.count = stats.max_args
+		},
+		{
+			.format = fmt,
+			.desc = "total number of types",
+			.count = stats.total_types
+		},
+		{
+			.format = fmt,
+			.desc = "total number of integers",
+			.count = stats.types[CTF_K_INTEGER]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of floats",
+			.count = stats.types[CTF_K_FLOAT]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of pointers",
+			.count = stats.types[CTF_K_POINTER]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of arrays",
+			.count = stats.types[CTF_K_ARRAY]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of func types",
+			.count = stats.types[CTF_K_FUNCTION]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of structs",
+			.count = stats.types[CTF_K_STRUCT]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of unions",
+			.count = stats.types[CTF_K_UNION]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of enums",
+			.count = stats.types[CTF_K_ENUM]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of forward tags",
+			.count = stats.types[CTF_K_FORWARD]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of typedefs",
+			.count = stats.types[CTF_K_TYPEDEF]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of volatile types",
+			.count = stats.types[CTF_K_VOLATILE]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of const types",
+			.count = stats.types[CTF_K_CONST]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of restrict types",
+			.count = stats.types[CTF_K_RESTRICT]
+		},
+		{
+			.format = fmt,
+			.desc = "total number of unknowns (holes)",
+			.count = stats.types[CTF_K_UNKNOWN]
+		}
+	};
+
+	printf(fmt, "total number of data objects", stats.total_objs);
+	printf("\n");
+
+	for(i=0; i < nitems(dump_types); i++)
+		printf(dump_types[i].format, dump_types[i].desc, dump_types[i].count);
 }
 
 const char *
@@ -634,7 +773,7 @@ exit:
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-dfhlst] file ...\n", getprogname());
+	fprintf(stderr, "usage: %s [-dfhlsSt] file ...\n", getprogname());
 	exit(1);
 }
 
