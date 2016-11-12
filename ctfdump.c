@@ -34,10 +34,6 @@
 
 #include "compat.h"
 
-#ifndef nitems
-#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
-#endif
-
 #define DUMP_OBJECT	(1 << 0)
 #define DUMP_FUNCTION	(1 << 1)
 #define DUMP_HEADER	(1 << 2)
