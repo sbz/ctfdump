@@ -69,6 +69,8 @@ int		 elf_getsection(const char *, const char *, const char *,
 char		*decompress(const char *, size_t, off_t);
 #endif /* ZLIB */
 
+void		print_line(const char *);
+
 int
 main(int argc, char *argv[])
 {
@@ -280,6 +282,8 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_HEADER) {
+		print_line("- CTF Header ");
+
 		printf("  cth_magic    = 0x%04x\n", cth->cth_magic);
 		printf("  cth_version  = %d\n", cth->cth_version);
 		printf("  cth_flags    = 0x%02x\n", cth->cth_flags);
@@ -293,12 +297,13 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		printf("  cth_typeoff  = %d\n", cth->cth_typeoff);
 		printf("  cth_stroff   = %d\n", cth->cth_stroff);
 		printf("  cth_strlen   = %d\n", cth->cth_strlen);
-		printf("\n");
 	}
 
 	if (flags & DUMP_LABEL) {
 		unsigned int		 lbloff = cth->cth_lbloff;
 		struct ctf_lblent	*ctl;
+
+		print_line("- Label Table ");
 
 		while (lbloff < cth->cth_objtoff) {
 			ctl = (struct ctf_lblent *)(data + lbloff);
@@ -317,6 +322,8 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		unsigned short		*dsp;
 		const char		*s;
 		int			 l;
+
+		print_line("- Data Objects ");
 
 		while (objtoff < cth->cth_funcoff) {
 			dsp = (unsigned short *)(data + objtoff);
@@ -338,6 +345,8 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		const char		*s;
 		int			 l;
 
+		print_line("- Functions ");
+
 		fsp = (unsigned short *)(data + cth->cth_funcoff);
 		while (fsp < (unsigned short *)(data + cth->cth_typeoff)) {
 			kind = CTF_INFO_KIND(*fsp);
@@ -357,11 +366,12 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 				printf("%u%s", *fsp++, (vlen > 0) ? ", " : "");
 			printf(")\n");
 		}
-		printf("\n");
 	}
 
 	if (flags & DUMP_TYPE) {
 		unsigned int		 idx = 1, offset = cth->cth_typeoff;
+
+		print_line("- Types ");
 
 		while (offset < cth->cth_stroff) {
 			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
@@ -372,6 +382,8 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	if (flags & DUMP_STRTAB) {
 		unsigned int		 offset = 0;
 		const char		*str;
+
+		print_line("- String Table ");
 
 		while (offset < cth->cth_strlen) {
 			str = ctf_off2name(cth, data, dlen, offset);
@@ -384,7 +396,6 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 				offset++;
 			}
 		}
-		printf("\n");
 	}
 
 	if (cth->cth_flags & CTF_F_COMPRESS)
@@ -627,3 +638,11 @@ usage(void)
 	exit(1);
 }
 
+void
+print_line(const char *str)
+{
+	static int nchar = 78;
+	static const char line[] = "----------------------------------------"
+		"----------------------------------------";
+	printf("\n%s%.*s\n\n", str, (int)(nchar - strlen(str)), line);
+}
