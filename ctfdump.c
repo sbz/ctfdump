@@ -78,6 +78,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
+	if (argc == 1)
+		usage();
+
 	while ((ch = getopt(argc, argv, "dfhlst")) != -1) {
 		switch (ch) {
 		case 'd':
@@ -105,6 +108,9 @@ main(int argc, char *argv[])
 
 	argc -= optind;
 	argv += optind;
+
+	if (*argv == NULL)
+		usage();
 
 	/* Dump everything by default */
 	if (flags == 0)
