@@ -22,14 +22,14 @@
 .Sh SYNOPSIS
 .Nm ctfdump
 .Op Fl dfhlst
+file...
 .Sh DESCRIPTION
 The
 .Nm
 utility display CTF information from the
 .Dv \.SUNW_ctf
-section of an
-.Xr elf 5
-file or from a raw CTF file.
+section of an ELF binary
+or from a raw CTF file.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -49,4 +49,5 @@ Display the type section.
 .Sh EXIT STATUS
 .Ex -std ctfdump
 .Sh SEE ALSO
+.Xr ctf 5
 .Xr elf 5

@@ -623,10 +623,7 @@ exit:
 __dead void
 usage(void)
 {
-	extern char		*__progname;
-
-	fprintf(stderr, "usage: %s [-dfhlst] [file ...]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-dfhlst] file ...\n", getprogname());
 	exit(1);
 }
 
