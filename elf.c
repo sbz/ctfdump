@@ -15,10 +15,11 @@
  */
 
 #include <sys/param.h>
-#include <sys/exec_elf.h>
 
 #include <err.h>
 #include <string.h>
+
+#include "compat.h"
 
 int
 iself(const char *p, size_t filesize)

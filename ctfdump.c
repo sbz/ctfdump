@@ -17,9 +17,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/exec_elf.h>
 #include <sys/mman.h>
-#include <sys/ctf.h>
 
 #include <err.h>
 #include <fcntl.h>
@@ -33,6 +31,8 @@
 #ifdef ZLIB
 #include <zlib.h>
 #endif /* ZLIB */
+
+#include "compat.h"
 
 #ifndef nitems
 #define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
