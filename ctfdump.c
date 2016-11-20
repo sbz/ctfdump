@@ -110,6 +110,9 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
+	if (argc <= 0)
+		usage();
+
 	/* Dump everything by default */
 	if (flags == 0)
 		flags = 0xff;
@@ -621,10 +624,8 @@ exit:
 __dead void
 usage(void)
 {
-	extern char		*__progname;
-
 	fprintf(stderr, "usage: %s [-dfhlst] [file ...]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
 
