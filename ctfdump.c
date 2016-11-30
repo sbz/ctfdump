@@ -139,10 +139,6 @@ dump(const char *path, uint8_t flags)
 		warn("fstat");
 		return 1;
 	}
-	if (st.st_size < (off_t)sizeof(struct ctf_header)) {
-		warnx("file too small to be CTF");
-		return 1;
-	}
 	if ((uintmax_t)st.st_size > SIZE_MAX) {
 		warnx("file too big to fit memory");
 		return 1;
@@ -232,11 +228,17 @@ int
 isctf(const char *p, size_t filesize)
 {
 	struct ctf_header	*cth = (struct ctf_header *)p;
-	off_t 			 dlen = cth->cth_stroff + cth->cth_strlen;
+	off_t 			 dlen;
+
+	if (filesize < (off_t)sizeof(struct ctf_header)) {
+		warnx("file too small to be CTF");
+		return 0;
+	}
 
 	if (cth->cth_magic != CTF_MAGIC || cth->cth_version != CTF_VERSION)
 		return 0;
 
+	dlen = cth->cth_stroff + cth->cth_strlen;
 	if (dlen > filesize && !(cth->cth_flags & CTF_F_COMPRESS)) {
 		warnx("bogus file size");
 		return 0;
