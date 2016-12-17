@@ -63,7 +63,7 @@ const char	*elf_idx2sym(size_t *, unsigned char);
 
 /* elf.c */
 int		 iself(const char *, size_t);
-int		 elf_getshstrtab(const char *, size_t, const char **, size_t *);
+int		 elf_getshstab(const char *, size_t, const char **, size_t *);
 int		 elf_getsymtab(const char *, const char *, size_t,
 		     const Elf_Sym **, size_t *);
 int		 elf_getsection(const char *, const char *, const char *,
@@ -162,7 +162,7 @@ dump(const char *path, uint8_t flags)
 
 const char		*strtab;
 const Elf_Sym		*symtab;
-size_t			 strtabsize, nsymb;
+size_t			 strtabsz, nsymb;
 
 const char *
 elf_idx2sym(size_t *idx, unsigned char type)
@@ -188,19 +188,19 @@ elf_dump(const char *p, size_t filesize, uint8_t flags)
 {
 	Elf_Ehdr		*eh = (Elf_Ehdr *)p;
 	Elf_Shdr		*sh;
-	const char		*shstrtab;
-	size_t			 i, shstrtabsize;
+	const char		*shstab;
+	size_t			 i, shstabsz;
 
 	/* Find section header string table location and size. */
-	if (elf_getshstrtab(p, filesize, &shstrtab, &shstrtabsize))
+	if (elf_getshstab(p, filesize, &shstab, &shstabsz))
 		return 1;
 
 	/* Find symbol table location and number of symbols. */
-	if (elf_getsymtab(p, shstrtab, shstrtabsize, &symtab, &nsymb))
+	if (elf_getsymtab(p, shstab, shstabsz, &symtab, &nsymb))
 		warnx("symbol table not found");
 
 	/* Find string table location and size. */
-	if (elf_getsection(p, ELF_STRTAB, shstrtab, shstrtabsize, &strtab, &strtabsize))
+	if (elf_getsection(p, ELF_STRTAB, shstab, shstabsz, &strtab, &strtabsz))
 		warnx("string table not found");
 
 	/* Find CTF section and dump it. */
@@ -208,10 +208,10 @@ elf_dump(const char *p, size_t filesize, uint8_t flags)
 		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
 
 		if ((sh->sh_link >= eh->e_shnum) ||
-		    (sh->sh_name >= shstrtabsize))
+		    (sh->sh_name >= shstabsz))
 			continue;
 
-		if (strncmp(shstrtab + sh->sh_name, ELF_CTF, strlen(ELF_CTF)))
+		if (strncmp(shstab + sh->sh_name, ELF_CTF, strlen(ELF_CTF)))
 			continue;
 
 		if (!isctf(p + sh->sh_offset, sh->sh_size))

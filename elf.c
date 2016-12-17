@@ -66,8 +66,8 @@ iself(const char *p, size_t filesize)
 }
 
 int
-elf_getshstrtab(const char *p, size_t filesize, const char **shstrtab,
-    size_t *shstrtabsize)
+elf_getshstab(const char *p, size_t filesize, const char **shstab,
+    size_t *shstabsize)
 {
 	Elf_Ehdr		*eh = (Elf_Ehdr *)p;
 	Elf_Shdr		*sh;
@@ -75,31 +75,33 @@ elf_getshstrtab(const char *p, size_t filesize, const char **shstrtab,
 	sh = (Elf_Shdr *)(p + eh->e_shoff + eh->e_shstrndx * eh->e_shentsize);
 	if (sh->sh_type != SHT_STRTAB) {
 		warnx("unexpected string table type");
-		return 1;
+		return -1;
 	}
 	if (sh->sh_offset > filesize) {
 		warnx("bogus string table offset");
-		return 1;
+		return -1;
 	}
 	if (sh->sh_size > filesize - sh->sh_offset) {
 		warnx("bogus string table size");
-		return 1;
+		return -1;
 	}
-	if (shstrtab != NULL)
-		*shstrtab = p + sh->sh_offset;
-	if (shstrtabsize != NULL)
-		*shstrtabsize = sh->sh_size;
+	if (shstab != NULL)
+		*shstab = p + sh->sh_offset;
+	if (shstabsize != NULL)
+		*shstabsize = sh->sh_size;
 
 	return 0;
 }
 
 int
-elf_getsymtab(const char *p, const char *shstrtab, size_t shstrtabsize,
+elf_getsymtab(const char *p, const char *shstab, size_t shstabsz,
     const Elf_Sym **symtab, size_t *nsymb)
 {
 	Elf_Ehdr	*eh = (Elf_Ehdr *)p;
 	Elf_Shdr	*sh;
-	size_t		 i;
+	size_t		 i, snlen;
+
+	snlen = strlen(ELF_SYMTAB);
 
 	for (i = 0; i < eh->e_shnum; i++) {
 		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
@@ -107,12 +109,10 @@ elf_getsymtab(const char *p, const char *shstrtab, size_t shstrtabsize,
 		if (sh->sh_type != SHT_SYMTAB)
 			continue;
 
-		if ((sh->sh_link >= eh->e_shnum) ||
-		    (sh->sh_name >= shstrtabsize))
+		if ((sh->sh_link >= eh->e_shnum) || (sh->sh_name >= shstabsz))
 			continue;
 
-		if (strncmp(shstrtab + sh->sh_name, ELF_SYMTAB,
-		    strlen(ELF_SYMTAB)) == 0) {
+		if (strncmp(shstab + sh->sh_name, ELF_SYMTAB, snlen) == 0) {
 			if (symtab != NULL)
 				*symtab = (Elf_Sym *)(p + sh->sh_offset);
 			if (nsymb != NULL)
@@ -122,34 +122,36 @@ elf_getsymtab(const char *p, const char *shstrtab, size_t shstrtabsize,
 		}
 	}
 
-	return 1;
+	return -1;
 }
 
 int
-elf_getsection(const char *p, const char *sname, const char *shstrtab,
-    size_t shstrtabsize, const char **sdata, size_t *ssize)
+elf_getsection(const char *p, const char *sname, const char *shstab,
+    size_t shstabsz, const char **sdata, size_t *ssz)
 {
 	Elf_Ehdr	*eh = (Elf_Ehdr *)p;
 	Elf_Shdr	*sh;
-	size_t		 i;
+	size_t		 i, snlen;
+
+	snlen = strlen(sname);
+	if (snlen == 0)
+		return -1;
 
 	for (i = 0; i < eh->e_shnum; i++) {
 		sh = (Elf_Shdr *)(p + eh->e_shoff + i * eh->e_shentsize);
 
-		if ((sh->sh_link >= eh->e_shnum) ||
-		    (sh->sh_name >= shstrtabsize))
+		if ((sh->sh_link >= eh->e_shnum) || (sh->sh_name >= shstabsz))
 			continue;
 
-		if (strncmp(shstrtab + sh->sh_name, sname,
-		    strlen(sname)) == 0) {
+		if (strncmp(shstab + sh->sh_name, sname, snlen) == 0) {
 			if (sdata != NULL)
 				*sdata = p + sh->sh_offset;
-			if (ssize != NULL)
-				*ssize = sh->sh_size;
+			if (ssz != NULL)
+				*ssz = sh->sh_size;
 
 			return 0;
 		}
 	}
 
-	return 1;
+	return -1;
 }
