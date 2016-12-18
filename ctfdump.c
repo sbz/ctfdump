@@ -58,15 +58,15 @@ const char	*ctf_enc2name(unsigned short);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
 		     unsigned int);
 
-int		 elf_dump(const char *, size_t, uint8_t);
+int		 elf_dump(char *, size_t, uint8_t);
 const char	*elf_idx2sym(size_t *, unsigned char);
 
 /* elf.c */
 int		 iself(const char *, size_t);
 int		 elf_getshstab(const char *, size_t, const char **, size_t *);
-int		 elf_getsymtab(const char *, const char *, size_t,
+ssize_t		 elf_getsymtab(const char *, const char *, size_t,
 		     const Elf_Sym **, size_t *);
-int		 elf_getsection(const char *, const char *, const char *,
+ssize_t		 elf_getsection(char *, const char *, const char *,
 		     size_t, const char **, size_t *);
 
 #ifdef ZLIB
@@ -184,7 +184,7 @@ elf_idx2sym(size_t *idx, unsigned char type)
 }
 
 int
-elf_dump(const char *p, size_t filesize, uint8_t flags)
+elf_dump(char *p, size_t filesize, uint8_t flags)
 {
 	Elf_Ehdr		*eh = (Elf_Ehdr *)p;
 	Elf_Shdr		*sh;
@@ -196,11 +196,12 @@ elf_dump(const char *p, size_t filesize, uint8_t flags)
 		return 1;
 
 	/* Find symbol table location and number of symbols. */
-	if (elf_getsymtab(p, shstab, shstabsz, &symtab, &nsymb))
+	if (elf_getsymtab(p, shstab, shstabsz, &symtab, &nsymb) == -1)
 		warnx("symbol table not found");
 
 	/* Find string table location and size. */
-	if (elf_getsection(p, ELF_STRTAB, shstab, shstabsz, &strtab, &strtabsz))
+	if (elf_getsection(p, ELF_STRTAB, shstab, shstabsz, &strtab,
+	    &strtabsz) == -1)
 		warnx("string table not found");
 
 	/* Find CTF section and dump it. */
