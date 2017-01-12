@@ -627,8 +627,7 @@ exit:
 __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-dfhlst] [file ...]\n",
+	fprintf(stderr, "usage: %s [-dfhlst] file ...\n",
 	    getprogname());
 	exit(1);
 }
-
