@@ -69,9 +69,7 @@ ssize_t		 elf_getsymtab(const char *, const char *, size_t,
 ssize_t		 elf_getsection(char *, const char *, const char *,
 		     size_t, const char **, size_t *);
 
-#ifdef ZLIB
 char		*decompress(const char *, size_t, off_t);
-#endif /* ZLIB */
 
 int
 main(int argc, char *argv[])
