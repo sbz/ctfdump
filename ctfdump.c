@@ -499,7 +499,7 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 			cte = (struct ctf_enum *)(p + toff);
 			toff += sizeof(struct ctf_enum);
 
-			printf("\t%s = %u\n",
+			printf("\t%s = %d\n",
 			    ctf_off2name(cth, data, dlen, cte->cte_name),
 			    cte->cte_value);
 		}
