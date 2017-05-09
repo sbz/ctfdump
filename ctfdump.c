@@ -51,15 +51,15 @@ int		 isctf(const char *, size_t);
 __dead void	 usage(void);
 
 int		 ctf_dump(const char *, size_t, uint8_t);
-unsigned int	 ctf_dump_type(struct ctf_header *, const char *, off_t,
-		     unsigned int, unsigned int);
-const char	*ctf_kind2name(unsigned short);
-const char	*ctf_enc2name(unsigned short);
+uint32_t	 ctf_dump_type(struct ctf_header *, const char *, off_t,
+		     uint32_t, uint32_t);
+const char	*ctf_kind2name(uint16_t);
+const char	*ctf_enc2name(uint16_t);
 const char	*ctf_off2name(struct ctf_header *, const char *, off_t,
-		     unsigned int);
+		     uint32_t);
 
 int		 elf_dump(char *, size_t, uint8_t);
-const char	*elf_idx2sym(size_t *, unsigned char);
+const char	*elf_idx2sym(size_t *, uint8_t);
 
 /* elf.c */
 int		 iself(const char *, size_t);
@@ -163,7 +163,7 @@ const Elf_Sym		*symtab;
 size_t			 strtabsz, nsymb;
 
 const char *
-elf_idx2sym(size_t *idx, unsigned char type)
+elf_idx2sym(size_t *idx, uint8_t type)
 {
 	const Elf_Sym	*st;
 	size_t		 i;
@@ -299,7 +299,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_LABEL) {
-		unsigned int		 lbloff = cth->cth_lbloff;
+		uint32_t		 lbloff = cth->cth_lbloff;
 		struct ctf_lblent	*ctl;
 
 		while (lbloff < cth->cth_objtoff) {
@@ -314,14 +314,14 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_OBJECT) {
-		unsigned int		 objtoff = cth->cth_objtoff;
+		uint32_t		 objtoff = cth->cth_objtoff;
 		size_t			 idx = 0, i = 0;
-		unsigned short		*dsp;
+		uint16_t		*dsp;
 		const char		*s;
 		int			 l;
 
 		while (objtoff < cth->cth_funcoff) {
-			dsp = (unsigned short *)(data + objtoff);
+			dsp = (uint16_t *)(data + objtoff);
 
 			l = printf("  [%zu] %u", i++, *dsp);
 			if ((s = elf_idx2sym(&idx, STT_OBJECT)) != NULL)
@@ -335,13 +335,13 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_FUNCTION) {
-		unsigned short		*fsp, kind, vlen;
+		uint16_t		*fsp, kind, vlen;
 		size_t			 idx = 0, i = -1;
 		const char		*s;
 		int			 l;
 
-		fsp = (unsigned short *)(data + cth->cth_funcoff);
-		while (fsp < (unsigned short *)(data + cth->cth_typeoff)) {
+		fsp = (uint16_t *)(data + cth->cth_funcoff);
+		while (fsp < (uint16_t *)(data + cth->cth_typeoff)) {
 			kind = CTF_INFO_KIND(*fsp);
 			vlen = CTF_INFO_VLEN(*fsp);
 			s = elf_idx2sym(&idx, STT_FUNC);
@@ -363,7 +363,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_TYPE) {
-		unsigned int		 idx = 1, offset = cth->cth_typeoff;
+		uint32_t		 idx = 1, offset = cth->cth_typeoff;
 
 		while (offset < cth->cth_stroff) {
 			offset += ctf_dump_type(cth, data, dlen, offset, idx++);
@@ -372,7 +372,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_STRTAB) {
-		unsigned int		 offset = 0;
+		uint32_t		 offset = 0;
 		const char		*str;
 
 		while (offset < cth->cth_strlen) {
@@ -395,15 +395,15 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	return 0;
 }
 
-unsigned int
+uint32_t
 ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
-    unsigned int offset, unsigned int idx)
+    uint32_t offset, uint32_t idx)
 {
 	const char		*p = data + offset;
 	const struct ctf_type	*ctt = (struct ctf_type *)p;
 	const struct ctf_array	*cta;
-	unsigned short		*argp, i, kind, vlen, root;
-	unsigned int		 eob, toff;
+	uint16_t		*argp, i, kind, vlen, root;
+	uint32_t		 eob, toff;
 	uint64_t		 size;
 	const char		*name, *kname;
 
@@ -433,15 +433,15 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 	case CTF_K_FORWARD:
 		break;
 	case CTF_K_INTEGER:
-		eob = *((unsigned int *)(p + toff));
-		toff += sizeof(unsigned int);
+		eob = *((uint32_t *)(p + toff));
+		toff += sizeof(uint32_t);
 		printf(" encoding=%s offset=%u bits=%u",
 		    ctf_enc2name(CTF_INT_ENCODING(eob)), CTF_INT_OFFSET(eob),
 		    CTF_INT_BITS(eob));
 		break;
 	case CTF_K_FLOAT:
-		eob = *((unsigned int *)(p + toff));
-		toff += sizeof(unsigned int);
+		eob = *((uint32_t *)(p + toff));
+		toff += sizeof(uint32_t);
 		printf(" encoding=0x%x offset=%u bits=%u",
 		    CTF_FP_ENCODING(eob), CTF_FP_OFFSET(eob), CTF_FP_BITS(eob));
 		break;
@@ -452,14 +452,14 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 		toff += sizeof(struct ctf_array);
 		break;
 	case CTF_K_FUNCTION:
-		argp = (unsigned short *)(p + toff);
+		argp = (uint16_t *)(p + toff);
 		printf(" returns: %u args: (%u", ctt->ctt_type, *argp);
 		for (i = 1; i < vlen; i++) {
 			argp++;
 			printf(", %u", *argp);
 		}
 		printf(")");
-		toff += (vlen + (vlen & 1)) * sizeof(unsigned short);
+		toff += (vlen + (vlen & 1)) * sizeof(uint16_t);
 		break;
 	case CTF_K_STRUCT:
 	case CTF_K_UNION:
@@ -521,7 +521,7 @@ ctf_dump_type(struct ctf_header *cth, const char *data, off_t dlen,
 }
 
 const char *
-ctf_kind2name(unsigned short kind)
+ctf_kind2name(uint16_t kind)
 {
 	static const char *kind_name[] = { NULL, "INTEGER", "FLOAT", "POINTER",
 	   "ARRAY", "FUNCTION", "STRUCT", "UNION", "ENUM", "FORWARD",
@@ -534,7 +534,7 @@ ctf_kind2name(unsigned short kind)
 }
 
 const char *
-ctf_enc2name(unsigned short enc)
+ctf_enc2name(uint16_t enc)
 {
 	static const char *enc_name[] = { "SIGNED", "CHAR", "SIGNED CHAR",
 	    "BOOL", "SIGNED BOOL" };
@@ -552,7 +552,7 @@ ctf_enc2name(unsigned short enc)
 
 const char *
 ctf_off2name(struct ctf_header *cth, const char *data, off_t dlen,
-    unsigned int offset)
+    uint32_t offset)
 {
 	const char		*name;
 
@@ -589,7 +589,7 @@ decompress(const char *buf, size_t size, off_t len)
 	memset(&stream, 0, sizeof(stream));
 	stream.next_in = (void *)buf;
 	stream.avail_in = size;
-	stream.next_out = (unsigned char *)data;
+	stream.next_out = (uint8_t *)data;
 	stream.avail_out = len;
 
 	if ((error = inflateInit(&stream)) != Z_OK) {
