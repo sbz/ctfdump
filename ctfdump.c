@@ -229,7 +229,7 @@ isctf(const char *p, size_t filesize)
 	struct ctf_header	*cth = (struct ctf_header *)p;
 	off_t 			 dlen;
 
-	if (filesize < (off_t)sizeof(struct ctf_header)) {
+	if (filesize < sizeof(struct ctf_header)) {
 		warnx("file too small to be CTF");
 		return 0;
 	}
@@ -238,7 +238,7 @@ isctf(const char *p, size_t filesize)
 		return 0;
 
 	dlen = cth->cth_stroff + cth->cth_strlen;
-	if (dlen > filesize && !(cth->cth_flags & CTF_F_COMPRESS)) {
+	if (dlen > (off_t)filesize && !(cth->cth_flags & CTF_F_COMPRESS)) {
 		warnx("bogus file size");
 		return 0;
 	}

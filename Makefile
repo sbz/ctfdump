@@ -2,7 +2,7 @@
 PROG=		ctfdump
 SRCS=		ctfdump.c elf.c
 
-CFLAGS+=	-W -Wall -Wno-unused -Wstrict-prototypes -Wno-unused-parameter
+CFLAGS+=	-W -Wall -Wstrict-prototypes -Wno-unused -Wunused-variable
 
 CFLAGS+=	-DZLIB
 LDADD+=		-lz
