@@ -293,7 +293,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		printf("  cth_version  = %d\n", cth->cth_version);
 		printf("  cth_flags    = 0x%02x\n", cth->cth_flags);
 		printf("  cth_parlabel = %s\n",
-		    ctf_off2name(cth, data, dlen, cth->cth_parname));
+		    ctf_off2name(cth, data, dlen, cth->cth_parlabel));
 		printf("  cth_parname  = %s\n",
 		    ctf_off2name(cth, data, dlen, cth->cth_parname));
 		printf("  cth_lbloff   = %d\n", cth->cth_lbloff);
