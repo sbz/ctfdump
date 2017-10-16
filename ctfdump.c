@@ -82,6 +82,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
+	if (argc == 1)
+		usage();
+
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
 
@@ -113,7 +116,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if (argc <= 0)
+	if (*argv == NULL)
 		usage();
 
 	/* Dump everything by default */
